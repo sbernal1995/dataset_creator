@@ -2,7 +2,7 @@ import cv2
 
 def main():
 
-    video_path = 'sea.mp4'
+    video_path = 'data/sea.mp4'
 
     cap = cv2.VideoCapture(video_path)
 
