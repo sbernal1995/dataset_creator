@@ -6,3 +6,5 @@
 .idea/vcs.xml
 src/__pycache__/video_player.cpython-311.pyc
 /.idea
+*.pyc
+*.pyc
