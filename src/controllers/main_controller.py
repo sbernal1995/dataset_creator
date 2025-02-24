@@ -4,8 +4,9 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QComboBox, QLabel, QStackedLayout)
 from PyQt5.QtCore import Qt, QTime
 
-from src.annotation import AnnotationWidget
-from video_player import VideoPlayer
+from src.widgets.annotation import AnnotationWidget
+from src.widgets.video_player import VideoPlayer
+
 
 class MainWindow(QMainWindow):
     def __init__(self):

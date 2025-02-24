@@ -1,6 +1,9 @@
-from PyQt5.QtWidgets import QWidget, QInputDialog
+from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import Qt, QRect, pyqtSignal
 from PyQt5.QtGui import QPainter, QPen, QPixmap
+
+from src.dialogs.species_dialog import SpeciesDialog
+
 
 class AnnotationWidget(QWidget):
     # Señal para indicar que se completó una anotación individual
@@ -40,14 +43,16 @@ class AnnotationWidget(QWidget):
             self.prompt_species(bounding_box)
 
     def prompt_species(self, bounding_box):
-        especies = ["Delfín", "Tiburón", "Pez payaso"]
-        especie, ok = QInputDialog.getItem(self, "Seleccionar Especie", "Nombre de la especie:", especies, 0, False)
-        if ok and especie:
-            # Agregar la anotación a la lista
-            self.annotations.append((especie, bounding_box))
-            print("Anotación completada:", especie, bounding_box.getRect())
-            self.annotationCompleted.emit(especie, bounding_box)
-            self.update() 
+        species_list = ["Delfín", "Tiburón", "Pez payaso", "Pez globlo", "Tortuga"]
+        dialog = SpeciesDialog(species_list, self)
+        if dialog.exec_():
+            specie = dialog.species
+            if specie:
+                # Agregar la anotación a la lista
+                self.annotations.append((specie, bounding_box))
+                print("Anotación completada:", specie, bounding_box.getRect())
+                self.annotationCompleted.emit(specie, bounding_box)
+                self.update()
 
     def paintEvent(self, event):
         painter = QPainter(self)
