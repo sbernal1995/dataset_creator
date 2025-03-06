@@ -3,7 +3,7 @@ import sys
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QHBoxLayout, QPushButton, QSlider, QAction, QFileDialog,
                              QComboBox, QLabel, QStackedLayout)
-from PyQt5.QtCore import Qt, QTime
+from PyQt5.QtCore import Qt, QTime, QSize
 from src.widgets.annotation import AnnotationWidget
 from src.widgets.video_player import VideoPlayer
 
@@ -11,6 +11,7 @@ from src.widgets.video_player import VideoPlayer
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self._saved_size = None
         self.setWindowTitle("Reproductor de Video")
         self.setGeometry(100, 100, 800, 600)
         self.create_menu()
@@ -116,6 +117,8 @@ class MainWindow(QMainWindow):
     def toggle_play_pause(self):
         if self.video_player.mediaPlayer.state() == self.video_player.mediaPlayer.PlayingState:
             self.video_player.pause()
+            self._saved_size = self.size()
+            self.setFixedSize(self._saved_size)
             self.play_pause_button.setText("Reproducir")
             from PyQt5.QtWidgets import QApplication
             screen = QApplication.primaryScreen()
@@ -129,6 +132,9 @@ class MainWindow(QMainWindow):
             self.annotation_widget.annotations.clear()
             self.video_player.play()
             self.play_pause_button.setText("Pausar")
+            self.setMinimumSize(0, 0)
+            self.setMaximumSize(16777215, 16777215)
+
 
     def update_position(self, position):
         self.position_slider.setValue(position)
