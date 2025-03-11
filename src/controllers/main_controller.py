@@ -4,6 +4,8 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QHBoxLayout, QPushButton, QSlider, QAction, QFileDialog,
                              QComboBox, QLabel, QStackedLayout)
 from PyQt5.QtCore import Qt, QTime, QSize
+
+from src.data.data_manager import DataManager
 from src.widgets.annotation import AnnotationWidget
 from src.widgets.video_player import VideoPlayer
 
@@ -39,6 +41,9 @@ class MainWindow(QMainWindow):
         self.annotation_widget.hide()  # Inicia oculto
         self.annotation_widget.annotationCompleted.connect(self.process_annotation)
         self.stack_layout.addWidget(self.annotation_widget)
+
+        #Instanciar el DataManager
+        self.data_manager = DataManager()
 
         # Agregar el contenedor del video (con ambos widgets) al layout principal
         main_layout.addWidget(video_container)
@@ -163,6 +168,32 @@ class MainWindow(QMainWindow):
 
     def process_annotation(self, especie, bounding_box):
         print(f"Anotación recibida: {especie}, área: {bounding_box.getRect()}")
+
+        import os
+        # Obtener el nombre del video
+        video_name = os.path.basename(self.last_video) if hasattr(self, "last_video") else "video_desconocido"
+
+        # Formatear el timestamp en "mm:ss"
+        from PyQt5.QtCore import QTime
+        current_seconds = self.video_player.mediaPlayer.position() // 1000
+        t = QTime(0, 0, 0).addSecs(current_seconds)
+        formatted_timestamp = t.toString("mm:ss")
+
+        # Capturar el frame actual del video
+        from PyQt5.QtWidgets import QApplication
+        screen = QApplication.primaryScreen()
+        frame_pixmap = screen.grabWindow(self.video_player.video_widget.winId())
+
+        # Mostrar en consola todos los datos que se enviarán al DataManager
+        print("Datos enviados al DataManager:")
+        print(f"  Video name: {video_name}")
+        print(f"  Especie: {especie}")
+        print(f"  Timestamp: {formatted_timestamp}")
+        print(f"  Bounding Box (rect): {bounding_box.getRect()}")
+        print(f"  Frame pixmap: {frame_pixmap}")
+
+        # Llamar al DataManager con los datos
+        self.data_manager.save_frame_and_data(video_name, especie, formatted_timestamp, bounding_box, frame_pixmap)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
