@@ -43,7 +43,7 @@ class AnnotationWidget(QWidget):
             self.prompt_species(bounding_box)
 
     def prompt_species(self, bounding_box):
-        species_list = ["Delfín", "Tiburón", "Pez payaso", "Pez globlo", "Tortuga"]
+        species_list = ["Delfin", "Tiburon", "Pez payaso", "Pez globlo", "Tortuga"]
         dialog = SpeciesDialog(species_list, self)
         if dialog.exec_():
             specie = dialog.species

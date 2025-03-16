@@ -9,3 +9,4 @@ src/__pycache__/video_player.cpython-311.pyc
 *.pyc
 *.pyc
 /src/__pycache__
+/src/output

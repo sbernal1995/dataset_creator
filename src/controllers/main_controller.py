@@ -10,6 +10,8 @@ from src.widgets.annotation import AnnotationWidget
 from src.widgets.video_player import VideoPlayer
 
 
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -19,6 +21,8 @@ class MainWindow(QMainWindow):
         self.create_menu()
         self.setFocusPolicy(Qt.StrongFocus)
         self.total_duration = 0
+
+
 
         # Widget central y layout principal
         central_widget = QWidget()
@@ -120,15 +124,16 @@ class MainWindow(QMainWindow):
             self.play_pause_button.setText("Pausar")
 
     def toggle_play_pause(self):
+        from PyQt5.QtWidgets import QApplication
         if self.video_player.mediaPlayer.state() == self.video_player.mediaPlayer.PlayingState:
             self.video_player.pause()
             self._saved_size = self.size()
             self.setFixedSize(self._saved_size)
             self.play_pause_button.setText("Reproducir")
-            from PyQt5.QtWidgets import QApplication
+            # Capturamos el snapshot y lo guardamos en un atributo global (self.snapshot)
             screen = QApplication.primaryScreen()
-            snapshot = screen.grabWindow(self.video_player.video_widget.winId())
-            self.annotation_widget.setBackground(snapshot)
+            self.snapshot = screen.grabWindow(self.video_player.video_widget.winId())
+            self.annotation_widget.setBackground(self.snapshot)
             self.annotation_widget.setCursor(Qt.CrossCursor)
             self.annotation_widget.show()
             self.annotation_widget.raise_()
@@ -140,6 +145,27 @@ class MainWindow(QMainWindow):
             self.setMinimumSize(0, 0)
             self.setMaximumSize(16777215, 16777215)
 
+    def process_annotation(self, especie, bounding_box):
+        import os
+        print(f"Anotación recibida: {especie}, área: {bounding_box.getRect()}")
+        # Obtener el nombre del video
+        video_name = os.path.basename(self.last_video) if hasattr(self, "last_video") else "video_desconocido"
+        # Formatear el timestamp en "mm:ss"
+        from PyQt5.QtCore import QTime
+        current_seconds = self.video_player.mediaPlayer.position() // 1000
+        t = QTime(0, 0, 0).addSecs(current_seconds)
+        formatted_timestamp = t.toString("mm:ss")
+
+        # Usar el snapshot global guardado en toggle_play_pause
+        if hasattr(self, "snapshot") and self.snapshot is not None:
+            snapshot = self.snapshot
+        else:
+            from PyQt5.QtWidgets import QApplication
+            print("No se encontró snapshot global, capturando snapshot de respaldo.")
+            snapshot = QApplication.primaryScreen().grabWindow(self.video_player.video_widget.winId())
+
+        # Llamar al DataManager para guardar la información
+        self.data_manager.save_frame_and_data(video_name, especie, formatted_timestamp, bounding_box, snapshot)
 
     def update_position(self, position):
         self.position_slider.setValue(position)
@@ -165,35 +191,6 @@ class MainWindow(QMainWindow):
         elif event.key() == Qt.Key_Space:
             self.toggle_play_pause()
         super().keyPressEvent(event)
-
-    def process_annotation(self, especie, bounding_box):
-        print(f"Anotación recibida: {especie}, área: {bounding_box.getRect()}")
-
-        import os
-        # Obtener el nombre del video
-        video_name = os.path.basename(self.last_video) if hasattr(self, "last_video") else "video_desconocido"
-
-        # Formatear el timestamp en "mm:ss"
-        from PyQt5.QtCore import QTime
-        current_seconds = self.video_player.mediaPlayer.position() // 1000
-        t = QTime(0, 0, 0).addSecs(current_seconds)
-        formatted_timestamp = t.toString("mm:ss")
-
-        # Capturar el frame actual del video
-        from PyQt5.QtWidgets import QApplication
-        screen = QApplication.primaryScreen()
-        frame_pixmap = screen.grabWindow(self.video_player.video_widget.winId())
-
-        # Mostrar en consola todos los datos que se enviarán al DataManager
-        print("Datos enviados al DataManager:")
-        print(f"  Video name: {video_name}")
-        print(f"  Especie: {especie}")
-        print(f"  Timestamp: {formatted_timestamp}")
-        print(f"  Bounding Box (rect): {bounding_box.getRect()}")
-        print(f"  Frame pixmap: {frame_pixmap}")
-
-        # Llamar al DataManager con los datos
-        self.data_manager.save_frame_and_data(video_name, especie, formatted_timestamp, bounding_box, frame_pixmap)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
