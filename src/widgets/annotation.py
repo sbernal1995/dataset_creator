@@ -1,9 +1,8 @@
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import Qt, QRect, pyqtSignal
 from PyQt5.QtGui import QPainter, QPen, QPixmap
-
 from src.dialogs.species_dialog import SpeciesDialog
-
+import os
 
 class AnnotationWidget(QWidget):
     # Señal para indicar que se completó una anotación individual
@@ -19,6 +18,25 @@ class AnnotationWidget(QWidget):
         self.background_pixmap = None  # Imagen de fondo (snapshot)
         # Lista de anotaciones: cada elemento es una tupla (especie, QRect)
         self.annotations = []
+
+    def load_species(self):
+        import os, sys
+        if getattr(sys, 'frozen', False):
+            base_path = os.path.dirname(sys.executable)
+        else:
+            base_path = os.path.dirname(__file__)
+
+        file_path = os.path.join(base_path, "especies.txt")
+        species_list = []
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        species_list.append(line)
+        except Exception as e:
+            print("Error al cargar especies desde especies.txt:", e)
+        return species_list
 
     def setBackground(self, pixmap: QPixmap):
         self.background_pixmap = pixmap
@@ -43,11 +61,13 @@ class AnnotationWidget(QWidget):
             self.prompt_species(bounding_box)
 
     def prompt_species(self, bounding_box):
-        species_list = ["Delfin", "Tiburon", "Pez payaso", "Pez globlo", "Tortuga"]
+        species_list = self.load_species()
         dialog = SpeciesDialog(species_list, self)
         if dialog.exec_():
             specie = dialog.species
             if specie:
+                # Normalizamos el input: quitamos espacios al inicio/final y reemplazamos espacios internos por '_'
+                specie = specie.strip().replace(" ", "_")
                 # Agregar la anotación a la lista
                 self.annotations.append((specie, bounding_box))
                 print("Anotación completada:", specie, bounding_box.getRect())
